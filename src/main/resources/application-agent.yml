@@ -1,0 +1,74 @@
+# Agent application configuration.
+server:
+  port: 8080
+  address: 127.0.0.1
+
+spring:
+  application:
+    name: springai-task-agent
+  datasource:
+    url: ${TASK_AGENT_DB_URL:jdbc:h2:file:./data/zhixing;AUTO_SERVER=FALSE;DB_CLOSE_ON_EXIT=FALSE}
+    username: sa
+    password: ${TASK_AGENT_DB_PASSWORD:}
+    driver-class-name: org.h2.Driver
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+  ai:
+    retry:
+      max-attempts: 1
+    openai:
+      # Spring AI 1.0.0-M4：completions-path / embeddings-path 拼接在 base-url 之后
+      api-key: ${DASHSCOPE_API_KEY:sk-placeholder}
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      chat:
+        completions-path: /v1/chat/completions
+        options:
+          model: ${QWEN_CHAT_MODEL:qwen-plus}
+          temperature: 0.7
+      embedding:
+        embeddings-path: /v1/embeddings
+        options:
+          model: ${QWEN_EMBED_MODEL:text-embedding-v2}
+
+# Task workflow, knowledge indexing and persistence settings.
+task-agent:
+  document:
+    # 内置知识库目录（classpath），启动时自动解析入库
+    path: ${TASK_AGENT_DOCUMENT_PATH:classpath:knowledge}
+  rag:
+    top-k: 4
+    similarity-threshold: 0.3
+    chunk-size: 800
+    chunk-overlap: 120
+  confirmation:
+    # 人机协同确认节点开关与超时（分钟）
+    enabled: ${TASK_AGENT_CONFIRMATION_ENABLED:true}
+    timeout-minutes: 10
+  retry:
+    # 首次尝试 + 最多三次重试
+    max-attempts: 4
+    initial-backoff-ms: 500
+    max-backoff-ms: 5000
+  log:
+    buffer-size: 2000
+  executor:
+    workers: 2
+    queue-capacity: 32
+  knowledge:
+    vector-path: ./data/knowledge-vectors.json
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-n/a} taskId=%X{taskId:-n/a}]"
+  level:
+    com.agent.springaitaskagent: info
+
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    local-cache-scope: statement
+  global-config:
+    banner: false
