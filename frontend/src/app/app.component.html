@@ -1,0 +1,1549 @@
+<div class="app-shell">
+    @if (mobileNav()) {
+        <button class="mobile-scrim" aria-label="关闭导航" (click)="mobileNav.set(false)"></button>
+    }
+    <aside class="sidebar" [class.mobile-open]="mobileNav()">
+        <button class="brand" (click)="navigate('overview')" aria-label="知行，返回工作概览">
+            <span class="brand-symbol"><ui-icon name="check" /></span>
+            <span class="brand-name">
+                知行
+                <span>企业知识工作台</span>
+            </span>
+        </button>
+        <div class="workspace-label">
+            <span class="workspace-avatar">Z</span>
+            <div>
+                我的工作空间
+                <small>本地演示 · 单人使用</small>
+            </div>
+            <span class="workspace-dot"></span>
+        </div>
+        <div class="nav-caption">工作空间</div>
+        <nav aria-label="主导航">
+            <button [class.active]="view() === 'overview'" (click)="navigate('overview')">
+                <ui-icon name="grid" />
+                <span>工作概览</span>
+            </button>
+            <button [class.active]="view() === 'tasks'" (click)="navigate('tasks')">
+                <ui-icon name="task" />
+                <span>任务中心</span>
+                @if (awaiting().length) {
+                    <span class="nav-count">{{ awaiting().length }}</span>
+                }
+            </button>
+            <button [class.active]="view() === 'knowledge'" (click)="navigate('knowledge')">
+                <ui-icon name="book" />
+                <span>知识空间</span>
+                <span class="nav-subcount">{{ documents().length }}</span>
+            </button>
+        </nav>
+        <div class="nav-caption second">管理</div>
+        <nav aria-label="系统导航">
+            <button [class.active]="view() === 'system'" (click)="navigate('system')">
+                <ui-icon name="settings" />
+                <span>系统状态</span>
+                <span class="tiny-dot" [class.offline]="!connected()"></span>
+            </button>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="sidebar-note">
+                <span class="note-symbol"><ui-icon name="shield" /></span>
+                <strong>让每个回答都有依据</strong>
+                <p>
+                    先检索，再核对。
+                    <br />
+                    把重要的决定留给人。
+                </p>
+            </div>
+            <div class="local-user">
+                <span class="user-avatar">演</span>
+                <div>
+                    演示工作空间
+                    <small>数据保存在当前电脑</small>
+                </div>
+                <ui-icon name="database" />
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-shell">
+        <header class="topbar">
+            <div class="breadcrumb">
+                <button
+                    class="icon-button mobile-menu"
+                    aria-label="打开导航"
+                    (click)="mobileNav.set(true)"
+                >
+                    <ui-icon name="menu" />
+                </button>
+                <span>工作空间</span>
+                <span class="breadcrumb-slash">/</span>
+                <strong>{{ pageTitles[view()] }}</strong>
+            </div>
+            <div class="topbar-actions">
+                <span class="connection" [class.disconnected]="!connected()">
+                    <span></span>
+                    {{ connected() ? '后端已连接' : '连接暂时中断' }}
+                </span>
+                <span class="top-divider"></span>
+                <button
+                    class="icon-button"
+                    aria-label="刷新工作空间"
+                    title="刷新工作空间"
+                    [disabled]="refreshing()"
+                    (click)="refresh(true)"
+                >
+                    <ui-icon name="refresh" [class.spinning]="refreshing()" />
+                </button>
+                <span class="top-avatar" title="本地演示用户">Z</span>
+            </div>
+        </header>
+
+        <main>
+            @if (error()) {
+                <div class="connection-banner" role="alert">
+                    <ui-icon name="warning" />
+                    <div>
+                        <strong>后端暂时无法连接</strong>
+                        <p>{{ error() }} 已加载的数据仅供查看，恢复连接后会自动更新。</p>
+                    </div>
+                    <button class="button small" (click)="refresh(true)" [disabled]="refreshing()">
+                        重新连接
+                    </button>
+                </div>
+            }
+
+            @if (view() === 'overview') {
+                <section class="page-heading">
+                    <div>
+                        <div class="eyebrow">YOUR KNOWLEDGE, IN ACTION</div>
+                        <h1>
+                            让知识，成为行动的起点
+                            <span class="heading-dot">.</span>
+                        </h1>
+                        <p>从一个问题开始，把检索、核对与回答连成清晰的工作流。</p>
+                    </div>
+                    <button class="button primary" (click)="openCompose()">
+                        <ui-icon name="plus" />
+                        新建任务
+                    </button>
+                </section>
+
+                <section class="hero-panel">
+                    <div class="hero-content">
+                        <span class="hero-tag">
+                            <span></span>
+                            有依据的回答，可追溯的过程
+                        </span>
+                        <h2>
+                            让 AI 处理信息，
+                            <br />
+                            让你掌握决定。
+                        </h2>
+                        <p>
+                            连接你的知识文档，先查看检索依据，
+                            <br class="desktop-break" />
+                            再由你批准生成。每一步，都有迹可循。
+                        </p>
+                        <button class="hero-link" (click)="openCompose()">
+                            开始一个新任务
+                            <ui-icon name="arrow" />
+                        </button>
+                    </div>
+                    <div class="workflow-art" aria-hidden="true">
+                        <div class="art-orbit orbit-one"></div>
+                        <div class="art-orbit orbit-two"></div>
+                        <div class="art-dots"></div>
+                        <div class="art-center"><ui-icon name="sparkle" /></div>
+                        <div class="art-node node-document">
+                            <span class="node-icon"><ui-icon name="book" /></span>
+                            <div>
+                                <strong>检索知识</strong>
+                                <small>找到问题的依据</small>
+                            </div>
+                            <span class="art-check">✓</span>
+                        </div>
+                        <div class="art-node node-review">
+                            <span class="node-icon"><ui-icon name="shield" /></span>
+                            <div>
+                                <strong>人工核对</strong>
+                                <small>重要决定，由你确认</small>
+                            </div>
+                            <span class="art-pulse"></span>
+                        </div>
+                        <div class="art-node node-answer">
+                            <span class="node-icon"><ui-icon name="sparkle" /></span>
+                            <div>
+                                <strong>生成回答</strong>
+                                <small>引用来源 · 有据可查</small>
+                            </div>
+                        </div>
+                        <span class="art-label">KNOWLEDGE → HUMAN → ANSWER</span>
+                    </div>
+                </section>
+
+                <section class="stats-grid" aria-label="任务统计">
+                    <button class="stat-card" (click)="navigate('tasks'); filter.set('ALL')">
+                        <span class="stat-top">
+                            累计任务
+                            <span class="stat-icon neutral"><ui-icon name="layers" /></span>
+                        </span>
+                        <strong>
+                            {{ metrics().total }}
+                            <span>个</span>
+                        </strong>
+                        <small>当前工作空间的全部任务</small>
+                    </button>
+                    <button
+                        class="stat-card awaiting-card"
+                        (click)="navigate('tasks'); filter.set('AWAITING_CONFIRMATION')"
+                    >
+                        <span class="stat-top">
+                            待人工审批
+                            <span class="stat-icon amber"><ui-icon name="shield" /></span>
+                        </span>
+                        <strong>
+                            {{ metrics().awaiting }}
+                            <span>个</span>
+                        </strong>
+                        <small>
+                            @if (metrics().awaiting) {
+                                有任务正在等待你的决定
+                            } @else {
+                                暂无待审批任务
+                            }
+                        </small>
+                    </button>
+                    <button class="stat-card" (click)="navigate('tasks'); filter.set('SUCCEEDED')">
+                        <span class="stat-top">
+                            已完成
+                            <span class="stat-icon green"><ui-icon name="check" /></span>
+                        </span>
+                        <strong>
+                            {{ metrics().succeeded }}
+                            <span>个</span>
+                        </strong>
+                        <small>流程完成，回答可随时查看</small>
+                    </button>
+                    <button class="stat-card" (click)="navigate('knowledge')">
+                        <span class="stat-top">
+                            知识文档
+                            <span class="stat-icon violet"><ui-icon name="book" /></span>
+                        </span>
+                        <strong>
+                            {{ knowledgeError() ? '—' : documents().length }}
+                            <span>份</span>
+                        </strong>
+                        <small>
+                            {{
+                                knowledgeError()
+                                    ? '知识状态暂时无法读取'
+                                    : readyDocuments().length + ' 份文档已准备好检索'
+                            }}
+                        </small>
+                    </button>
+                </section>
+
+                <div class="overview-columns">
+                    <section class="panel recent-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>
+                                    最近任务
+                                    <span class="subtle-count">{{ tasks().length }}</span>
+                                </h2>
+                                <p>每一次提问，都留下清晰的处理轨迹</p>
+                            </div>
+                            <button class="text-button" (click)="navigate('tasks')">
+                                全部任务
+                                <ui-icon name="arrow" />
+                            </button>
+                        </div>
+                        @if (loading()) {
+                            <div class="skeleton-list">
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                            </div>
+                        } @else if (!recentTasks().length) {
+                            <div class="empty-state compact">
+                                <span class="empty-icon"><ui-icon name="task" /></span>
+                                <h3>第一个好问题，从这里开始</h3>
+                                <p>提交问题，查看依据，再决定是否生成回答。</p>
+                                <button class="button" (click)="openCompose()">
+                                    <ui-icon name="plus" />
+                                    创建第一个任务
+                                </button>
+                            </div>
+                        } @else {
+                            <div class="recent-task-list">
+                                @for (task of recentTasks(); track task.taskId) {
+                                    <button class="recent-task" (click)="openTask(task)">
+                                        <span
+                                            class="task-leading"
+                                            [class]="'task-leading ' + statusClass(task.status)"
+                                        >
+                                            <ui-icon [name]="statusIcon(task.status)" />
+                                        </span>
+                                        <div class="recent-task-copy">
+                                            <strong>{{ task.question }}</strong>
+                                            <span>
+                                                {{ task.taskId }}
+                                                <i>·</i>
+                                                {{ date(task.createdAt, true) }}
+                                            </span>
+                                        </div>
+                                        <span [class]="'status-badge ' + statusClass(task.status)">
+                                            {{ statusLabel(task.status) }}
+                                        </span>
+                                        <ui-icon class="row-chevron" name="chevron" />
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </section>
+                    <section class="panel start-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>试着问一个问题</h2>
+                                <p>示例使用内置的虚构制度文档</p>
+                            </div>
+                            <span class="small-sparkle"><ui-icon name="sparkle" /></span>
+                        </div>
+                        <div class="preset-list">
+                            @for (preset of presets; track preset.label) {
+                                <button class="preset-card" (click)="openCompose(preset.question)">
+                                    <span><ui-icon [name]="preset.icon" /></span>
+                                    <div>
+                                        <strong>{{ preset.label }}</strong>
+                                        <small>{{ preset.question }}</small>
+                                    </div>
+                                    <ui-icon name="arrow" />
+                                </button>
+                            }
+                        </div>
+                        <div class="hint-line">
+                            <ui-icon name="info" />
+                            示例只填入问题，提交后才会调用模型。
+                        </div>
+                    </section>
+                </div>
+                <div class="footer-note">
+                    <span>
+                        <ui-icon name="shield" />
+                        人工审批已启用 · 每次生成都由你确认
+                    </span>
+                    <span>本地单人演示 · 非实际企业制度</span>
+                </div>
+            }
+
+            @if (view() === 'tasks') {
+                <section class="page-heading">
+                    <div>
+                        <div class="eyebrow">TASK WORKSPACE</div>
+                        <h1>
+                            {{ showDeletedTasks() ? '最近删除' : '任务中心' }}
+                            <span class="heading-dot">.</span>
+                        </h1>
+                        <p>
+                            {{
+                                showDeletedTasks()
+                                    ? '误删可以恢复，原有回答与执行记录会保留。'
+                                    : '从问题到回答，每一步都清楚可见。'
+                            }}
+                        </p>
+                    </div>
+                    <div class="task-page-actions">
+                        <button
+                            class="button"
+                            (click)="toggleDeletedTasks()"
+                            [disabled]="taskDeleteBusy()"
+                        >
+                            <ui-icon [name]="showDeletedTasks() ? 'task' : 'trash'" />
+                            {{ showDeletedTasks() ? '返回任务中心' : '最近删除' }}
+                        </button>
+                        <button class="button primary" (click)="openCompose()">
+                            <ui-icon name="plus" />
+                            新建任务
+                        </button>
+                    </div>
+                </section>
+                <section class="panel task-table-panel">
+                    <div class="table-toolbar">
+                        <div class="filter-tabs" aria-label="快速筛选">
+                            <button [class.active]="filter() === 'ALL'" (click)="filter.set('ALL')">
+                                {{ showDeletedTasks() ? '已删除任务' : '全部任务' }}
+                                <span>
+                                    {{
+                                        showDeletedTasks() ? deletedTasks().length : tasks().length
+                                    }}
+                                </span>
+                            </button>
+                            @if (!showDeletedTasks()) {
+                                <button
+                                    [class.active]="filter() === 'AWAITING_CONFIRMATION'"
+                                    (click)="filter.set('AWAITING_CONFIRMATION')"
+                                >
+                                    待审批
+                                    <span>{{ awaiting().length }}</span>
+                                </button>
+                            }
+                        </div>
+                        <div class="table-controls">
+                            <label class="search-input">
+                                <ui-icon name="search" />
+                                <input
+                                    type="search"
+                                    placeholder="搜索问题或任务编号"
+                                    aria-label="搜索问题或任务编号"
+                                    [ngModel]="search()"
+                                    (ngModelChange)="search.set($event)"
+                                />
+                            </label>
+                            <select
+                                aria-label="按状态筛选"
+                                [ngModel]="filter()"
+                                (ngModelChange)="filter.set($event)"
+                            >
+                                <option value="ALL">全部状态</option>
+                                @for (option of statusOptions; track option.value) {
+                                    <option [value]="option.value">{{ option.label }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    @if (showDeletedTasks() && deletedTasksError()) {
+                        <div class="inline-error">{{ deletedTasksError() }}</div>
+                    }
+                    @if (visibleTasks().length) {
+                        <div class="task-batch-toolbar">
+                            <label class="task-check-label">
+                                <input type="checkbox" [checked]="allTasksChecked()"
+                                    [indeterminate]="checkedTasks().length > 0 && !allTasksChecked()"
+                                    [disabled]="taskDeleteBusy() || !connected() || !selectableTasks().length"
+                                    (change)="toggleAllTasks()" />
+                                全选当前列表
+                            </label>
+                            <span>已选 {{ checkedTasks().length }} 条 · 仅选择当前筛选结果中的已结束任务</span>
+                            <button class="button small danger" [disabled]="!checkedTasks().length || taskDeleteBusy() || !connected()"
+                                (click)="requestSelectedDeletion()">
+                                <ui-icon name="trash" />
+                                {{ showDeletedTasks() ? '永久删除选中' : '删除选中' }}（{{ checkedTasks().length }}）
+                            </button>
+                        </div>
+                    }
+                    @if (loading()) {
+                        <div class="skeleton-list">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                    } @else if (!visibleTasks().length) {
+                        <div class="empty-state">
+                            <span class="empty-icon">
+                                <ui-icon [name]="search() ? 'search' : 'task'" />
+                            </span>
+                            <h3>
+                                {{
+                                    search() || filter() !== 'ALL'
+                                        ? '没有匹配的任务'
+                                        : showDeletedTasks()
+                                          ? '最近删除为空'
+                                          : '还没有任务'
+                                }}
+                            </h3>
+                            <p>
+                                {{
+                                    search() || filter() !== 'ALL'
+                                        ? '试试其他关键词，或清除筛选条件。'
+                                        : showDeletedTasks()
+                                          ? '删除的历史任务会出现在这里，可随时恢复。'
+                                          : '先提交一个问题，让知识开始流动。'
+                                }}
+                            </p>
+                            @if (search() || filter() !== 'ALL') {
+                                <button class="button" (click)="search.set(''); filter.set('ALL')">
+                                    清除筛选
+                                </button>
+                            } @else if (!showDeletedTasks()) {
+                                <button class="button primary" (click)="openCompose()">
+                                    新建任务
+                                </button>
+                            }
+                        </div>
+                    } @else {
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="task-checkbox-cell"><span class="sr-only">选择任务</span></th>
+                                        <th>任务 / 问题</th>
+                                        <th>状态</th>
+                                        <th>创建时间</th>
+                                        <th>追踪编号</th>
+                                        <th><span class="sr-only">操作</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (task of visibleTasks(); track task.taskId) {
+                                        <tr (click)="openTask(task)">
+                                            <td class="task-checkbox-cell" (click)="$event.stopPropagation()">
+                                                <input type="checkbox" [checked]="checkedTaskIds().has(task.taskId)"
+                                                    [disabled]="!isTerminal(task) || taskDeleteBusy() || !connected()"
+                                                    [attr.aria-label]="'选择任务：' + task.question"
+                                                    [title]="isTerminal(task) ? '选择此任务' : '任务结束后才能删除'"
+                                                    (change)="toggleTaskChecked(task)" />
+                                            </td>
+                                            <td>
+                                                <button
+                                                    class="table-question"
+                                                    (click)="
+                                                        $event.stopPropagation(); openTask(task)
+                                                    "
+                                                >
+                                                    <span class="file-glyph">
+                                                        <ui-icon name="task" />
+                                                    </span>
+                                                    <span>
+                                                        <strong>{{ task.question }}</strong>
+                                                        <small>{{ task.taskId }}</small>
+                                                    </span>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    [class]="
+                                                        'status-badge ' + statusClass(task.status)
+                                                    "
+                                                >
+                                                    <span></span>
+                                                    {{ statusLabel(task.status) }}
+                                                </span>
+                                            </td>
+                                            <td class="muted nowrap">
+                                                {{ date(task.createdAt, true) }}
+                                            </td>
+                                            <td class="mono muted">
+                                                {{ task.traceId ? task.traceId.slice(0, 12) : '—' }}
+                                            </td>
+                                            <td>
+                                                <div class="task-row-actions">
+                                                    @if (showDeletedTasks()) {
+                                                        <button
+                                                            class="button small"
+                                                            [disabled]="
+                                                                taskDeleteBusy() || !connected()
+                                                            "
+                                                            (click)="
+                                                                $event.stopPropagation();
+                                                                restoreTask(task)
+                                                            "
+                                                            [attr.aria-label]="
+                                                                '恢复任务：' + task.question
+                                                            "
+                                                        >
+                                                            恢复
+                                                        </button>
+                                                        <button
+                                                            class="button small danger"
+                                                            [disabled]="
+                                                                taskDeleteBusy() || !connected()
+                                                            "
+                                                            [attr.aria-label]="
+                                                                '永久删除任务：' + task.question
+                                                            "
+                                                            (click)="
+                                                                $event.stopPropagation();
+                                                                requestTaskDeletion(task, true)
+                                                            "
+                                                        >
+                                                            永久删除
+                                                        </button>
+                                                    } @else {
+                                                        <button
+                                                            class="icon-button"
+                                                            aria-label="查看任务详情"
+                                                            (click)="
+                                                                $event.stopPropagation();
+                                                                openTask(task)
+                                                            "
+                                                        >
+                                                            <ui-icon name="chevron" />
+                                                        </button>
+                                                        @if (isTerminal(task)) {
+                                                            <button
+                                                                class="icon-button danger-hover"
+                                                                [disabled]="
+                                                                    taskDeleteBusy() || !connected()
+                                                                "
+                                                                [attr.aria-label]="
+                                                                    '删除任务：' + task.question
+                                                                "
+                                                                title="删除任务，可在最近删除中恢复"
+                                                                (click)="
+                                                                    $event.stopPropagation();
+                                                                    requestTaskDeletion(task)
+                                                                "
+                                                            >
+                                                                <ui-icon name="trash" />
+                                                            </button>
+                                                        }
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer">
+                            <span>
+                                显示 {{ visibleTasks().length }} 条，共
+                                {{ showDeletedTasks() ? deletedTasks().length : tasks().length }}
+                                条任务
+                            </span>
+                            <span class="live-indicator">
+                                <span></span>
+                                每 4 秒同步状态
+                            </span>
+                        </div>
+                    }
+                </section>
+                <div class="info-strip">
+                    <ui-icon name="info" />
+                    <span>
+                        “已完成”表示流程执行完成。请结合引用依据核对回答；无相关依据时，系统会明确告知无法确认。
+                    </span>
+                </div>
+            }
+
+            @if (view() === 'knowledge') {
+                <section class="page-heading">
+                    <div>
+                        <div class="eyebrow">YOUR SOURCE OF TRUTH</div>
+                        <h1>
+                            知识空间
+                            <span class="heading-dot">.</span>
+                        </h1>
+                        <p>给回答一份可靠的依据。上传制度文档，让助手从你的资料中寻找答案。</p>
+                    </div>
+                    <label class="button primary upload-button" [class.disabled]="uploadBusy()">
+                        <ui-icon [name]="uploadBusy() ? 'refresh' : 'upload'" />
+                        {{ uploadBusy() ? '解析与索引中…' : '上传文档' }}
+                        <input
+                            type="file"
+                            accept=".md,.txt,.pdf,.docx"
+                            (change)="upload($event)"
+                            [disabled]="uploadBusy() || rebuildBusy()"
+                            aria-label="上传知识文档"
+                        />
+                    </label>
+                </section>
+                @if (knowledgeError()) {
+                    <div class="inline-error" role="alert">
+                        知识列表暂时无法读取：{{ knowledgeError() }}
+                    </div>
+                }
+                <section class="knowledge-banner">
+                    <div class="knowledge-illustration">
+                        <ui-icon name="book" />
+                        <span><ui-icon name="check" /></span>
+                    </div>
+                    <div>
+                        <h2>好答案，来自好资料。</h2>
+                        <p>
+                            支持 Markdown、TXT、PDF、DOCX，单文件不超过 10 MB。
+                            <br />
+                            文档会解析、分块并生成向量，准备完成后即可参与检索。
+                        </p>
+                    </div>
+                    <span class="knowledge-summary">
+                        <strong>{{ readyDocuments().length }}</strong>
+                        份可用文档
+                    </span>
+                </section>
+                @if (system()?.knowledgeError) {
+                    <div class="inline-error knowledge-model-error" role="alert">
+                        知识索引暂不可用：{{ system()?.knowledgeError }}
+                    </div>
+                }
+                <div class="section-title">
+                    <h2>
+                        全部文档
+                        <span class="subtle-count">{{ documents().length }}</span>
+                    </h2>
+                    <span class="muted small">当前工作空间共享知识 · 新任务可选择检索范围</span>
+                </div>
+                @if (needsRebuild()) {
+                    <div class="knowledge-recovery">
+                        <div>
+                            <strong>部分知识尚未准备好</strong>
+                            <p>修复模型配置或网络后可重建全部文档索引。此操作会调用向量模型。</p>
+                        </div>
+                        <button
+                            class="button"
+                            [disabled]="rebuildBusy() || uploadBusy() || !connected()"
+                            (click)="rebuildConfirmOpen.set(true)"
+                        >
+                            <ui-icon name="refresh" [class.spinning]="rebuildBusy()" />
+                            {{ rebuildBusy() ? '正在重建…' : '重建全部索引' }}
+                        </button>
+                    </div>
+                }
+                @if (!documents().length && !loading()) {
+                    <section class="panel empty-state">
+                        <span class="empty-icon"><ui-icon name="book" /></span>
+                        <h3>知识空间还是空的</h3>
+                        <p>上传一份不包含敏感信息的演示文档，开始检索。</p>
+                    </section>
+                }
+                <div class="document-grid">
+                    @for (doc of documents(); track doc.id) {
+                        <article class="document-card">
+                            <div class="document-card-top">
+                                <span class="document-symbol"><ui-icon name="file" /></span>
+                                <button
+                                    class="icon-button danger-hover"
+                                    [attr.aria-label]="'移除文档 ' + doc.name"
+                                    title="移除文档"
+                                    [disabled]="rebuildBusy() || uploadBusy()"
+                                    (click)="deleteCandidate.set(doc)"
+                                >
+                                    <ui-icon name="trash" />
+                                </button>
+                            </div>
+                            <h3 [title]="doc.name">{{ doc.name }}</h3>
+                            <span
+                                [class]="
+                                    'document-status ' +
+                                    (documentReady(doc)
+                                        ? 'ready'
+                                        : doc.errorMessage
+                                          ? 'failed'
+                                          : 'processing')
+                                "
+                            >
+                                <span></span>
+                                {{ documentStatus(doc) }}
+                            </span>
+                            <div class="document-meta">
+                                <span>{{ doc.chunkCount || 0 }} 个知识分块</span>
+                                <span>{{ date(doc.createdAt, true) }}</span>
+                            </div>
+                            @if (doc.errorMessage) {
+                                <div class="document-error">{{ doc.errorMessage }}</div>
+                            }
+                            <div class="document-id mono">{{ doc.id }}</div>
+                        </article>
+                    }
+                </div>
+                <div class="info-strip">
+                    <ui-icon name="shield" />
+                    <span>
+                        上传的资料用于当前工作空间的知识检索，相关片段会发送至已配置的模型服务。请使用虚构或获准使用的材料；扫描版
+                        PDF 需要先转为可提取文字的文档。
+                    </span>
+                </div>
+            }
+
+            @if (view() === 'system') {
+                <section class="page-heading">
+                    <div>
+                        <div class="eyebrow">OBSERVABILITY & TRUST</div>
+                        <h1>
+                            系统状态
+                            <span class="heading-dot">.</span>
+                        </h1>
+                        <p>把服务连接、模型配置与数据存储放在一起，运行情况一目了然。</p>
+                    </div>
+                    <button class="button" [disabled]="refreshing()" (click)="refresh(true)">
+                        <ui-icon name="refresh" />
+                        刷新状态
+                    </button>
+                </section>
+                @if (systemError()) {
+                    <div class="inline-error" role="alert">
+                        系统配置暂时无法读取：{{ systemError() }}
+                    </div>
+                }
+                <div class="system-grid">
+                    <section class="panel system-card">
+                        <div class="system-icon"><ui-icon name="link" /></div>
+                        <h2>后端服务</h2>
+                        <span [class]="'system-status ' + (connected() ? 'ok' : 'bad')">
+                            {{ connected() ? '连接正常' : '连接中断' }}
+                        </span>
+                        <p>服务连接与任务接口可访问性</p>
+                        <dl>
+                            <div>
+                                <dt>服务地址</dt>
+                                <dd>当前页面同源服务</dd>
+                            </div>
+                            <div>
+                                <dt>最近同步</dt>
+                                <dd>
+                                    {{ lastSync() ? (lastSync() | date: 'HH:mm:ss') : '尚未同步' }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>运行场景</dt>
+                                <dd>本地单人演示</dd>
+                            </div>
+                        </dl>
+                    </section>
+                    <section class="panel system-card">
+                        <div class="system-icon violet"><ui-icon name="sparkle" /></div>
+                        <h2>模型与检索</h2>
+                        <span
+                            [class]="
+                                'system-status ' + (system()?.knowledgeReady ? 'ok' : 'pending')
+                            "
+                        >
+                            {{ system()?.knowledgeReady ? '知识索引可用' : '知识尚未就绪' }}
+                        </span>
+                        <p>云端模型配置不等于每次调用都成功</p>
+                        @if (system()?.knowledgeError) {
+                            <div class="inline-error system-knowledge-error">
+                                {{ system()?.knowledgeError }}
+                            </div>
+                        }
+                        <dl>
+                            <div>
+                                <dt>回答模型</dt>
+                                <dd>{{ system()?.chatModel || '读取中' }}</dd>
+                            </div>
+                            <div>
+                                <dt>向量模型</dt>
+                                <dd>{{ system()?.embeddingModel || '读取中' }}</dd>
+                            </div>
+                            <div>
+                                <dt>运行模式</dt>
+                                <dd>
+                                    {{ system()?.mode === 'cloud' ? '云端模型' : '以服务配置为准' }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>模型密钥</dt>
+                                <dd>
+                                    {{
+                                        system()?.apiKeyConfigured === true
+                                            ? '已配置（不展示密钥）'
+                                            : system()?.apiKeyConfigured === false
+                                              ? '尚未配置'
+                                              : '由后端环境变量管理'
+                                    }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+                    <section class="panel system-card">
+                        <div class="system-icon"><ui-icon name="database" /></div>
+                        <h2>存储与审批</h2>
+                        <span [class]="'system-status ' + (system()?.storage ? 'ok' : 'pending')">
+                            {{ system()?.storage ? system()?.storage + ' 持久化' : '读取存储状态' }}
+                        </span>
+                        <p>数据库类型来自实际连接，向量索引保存在本机文件</p>
+                        <dl>
+                            <div>
+                                <dt>人工审批</dt>
+                                <dd>
+                                    {{
+                                        system()?.confirmationRequired
+                                            ? '每次生成前确认'
+                                            : '以服务配置为准'
+                                    }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>任务记录</dt>
+                                <dd>重启后可继续查看历史</dd>
+                            </div>
+                            <div>
+                                <dt>当前活动任务</dt>
+                                <dd>{{ activeCount() }} 个</dd>
+                            </div>
+                            <div>
+                                <dt>文档数量</dt>
+                                <dd>{{ documents().length }} 份</dd>
+                            </div>
+                        </dl>
+                    </section>
+                </div>
+                <section class="panel boundaries-panel">
+                    <span class="boundaries-icon"><ui-icon name="shield" /></span>
+                    <div>
+                        <h2>清楚知道边界，才能放心使用</h2>
+                        <p>
+                            这是用于学习与面试演示的本地单用户系统，不包含登录、组织权限或真实 OA
+                            审批集成。审批控制的是回答生成流程。内置制度为虚构示例，回答需结合原文核验。
+                        </p>
+                        <p>
+                            模型调用可能因额度、密钥、网络或服务限制失败。请以具体任务的结果与执行日志为准，后端连接正常不等于
+                            AI 功能始终可用。
+                        </p>
+                    </div>
+                </section>
+            }
+        </main>
+    </div>
+</div>
+
+@if (composeOpen()) {
+    <div class="overlay" (click)="closeCompose()">
+        <section
+            class="compose-dialog dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="compose-title"
+            (click)="$event.stopPropagation()"
+        >
+            <header class="dialog-header">
+                <div>
+                    <span class="eyebrow">A NEW POSSIBILITY</span>
+                    <h2 id="compose-title">把问题交给知识。</h2>
+                    <p>先检索依据，再由你批准生成回答。</p>
+                </div>
+                <button
+                    class="icon-button"
+                    aria-label="关闭新建任务窗口"
+                    [disabled]="submitBusy()"
+                    (click)="closeCompose()"
+                >
+                    <ui-icon name="close" />
+                </button>
+            </header>
+            <form (ngSubmit)="submit()">
+                <div class="compose-body">
+                    <label class="field-label" for="task-question">
+                        你想了解什么？
+                        <span>必填</span>
+                    </label>
+                    <textarea
+                        id="task-question"
+                        name="question"
+                        [(ngModel)]="question"
+                        required
+                        maxlength="4000"
+                        rows="4"
+                        placeholder="例如：一线城市差旅住宿限额是多少？请注明制度来源。"
+                        [disabled]="submitBusy()"
+                    ></textarea>
+                    <div class="textarea-footer">
+                        <span>一个具体的问题，更容易找到准确依据</span>
+                        <span>{{ question.length }} / 4000</span>
+                        <button
+                            type="button"
+                            class="button"
+                            (click)="question = ''"
+                            [disabled]="submitBusy() || question.length === 0"
+                        >
+                            清空问题
+                        </button>
+                    </div>
+                    <div class="compose-presets">
+                        @for (preset of presets; track preset.label) {
+                            <button
+                                type="button"
+                                (click)="question = preset.question"
+                                [disabled]="submitBusy()"
+                            >
+                                {{ preset.label }}
+                            </button>
+                        }
+                    </div>
+                    <div class="field-label scope-label">
+                        检索范围
+                        <span>
+                            {{ material.trim() ? '当前仅使用补充文本' : '不选则检索全部可用知识' }}
+                        </span>
+                    </div>
+                    <div class="document-select">
+                        @for (doc of readyDocuments(); track doc.id) {
+                            <label [class.selected]="selectedDocumentIds.includes(doc.id)">
+                                <input
+                                    type="checkbox"
+                                    [checked]="selectedDocumentIds.includes(doc.id)"
+                                    (change)="toggleDocument(doc.id)"
+                                    [disabled]="submitBusy() || !!material.trim()"
+                                />
+                                <ui-icon name="file" />
+                                <span>{{ doc.name }}</span>
+                            </label>
+                        }
+                        @if (!readyDocuments().length) {
+                            <p class="muted small">
+                                暂无可用文档。请先在知识空间上传材料并等待索引完成。
+                            </p>
+                        }
+                    </div>
+                    @if (material.trim()) {
+                        <p class="scope-help">
+                            正在使用当前任务补充文本。清空下方文本后，才可选择知识文档。
+                        </p>
+                    }
+                    <details class="material-details">
+                        <summary>
+                            <ui-icon name="plus" />
+                            补充参考材料
+                            <span>可选</span>
+                        </summary>
+                        <label class="sr-only" for="task-material">补充参考材料</label>
+                        <textarea
+                            id="task-material"
+                            name="material"
+                            [ngModel]="material"
+                            (ngModelChange)="setMaterial($event)"
+                            maxlength="20000"
+                            rows="4"
+                            placeholder="粘贴可使用的制度片段或参考资料…"
+                            [disabled]="submitBusy()"
+                        ></textarea>
+                        <p>
+                            <ui-icon name="info" />
+                            补充文本仅作为当前任务的资料，不加入共享知识空间；与选定文档二选一。相关片段可能发送至云端模型，请勿粘贴密钥或未获授权的敏感资料。
+                        </p>
+                    </details>
+                    <div class="compose-flow">
+                        <span>
+                            <ui-icon name="search" />
+                            检索依据
+                        </span>
+                        <ui-icon name="chevron" />
+                        <span>
+                            <ui-icon name="shield" />
+                            人工审批
+                        </span>
+                        <ui-icon name="chevron" />
+                        <span>
+                            <ui-icon name="sparkle" />
+                            生成回答
+                        </span>
+                    </div>
+                </div>
+                <footer class="dialog-footer">
+                    <span>
+                        <ui-icon name="shield" />
+                        提交后不会自动跳过审批
+                    </span>
+                    <button
+                        class="button primary"
+                        type="submit"
+                        [disabled]="submitBusy() || !question.trim() || !connected()"
+                    >
+                        <ui-icon [name]="submitBusy() ? 'refresh' : 'arrow'" />
+                        {{ submitBusy() ? '正在提交…' : '提交任务' }}
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+}
+
+@if (selected(); as task) {
+    <div class="detail-overlay" (click)="closeDetail()">
+        <section
+            class="detail-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="detail-title"
+            (click)="$event.stopPropagation()"
+        >
+            <header class="detail-header">
+                <div>
+                    <span class="eyebrow">TASK DETAIL</span>
+                    <h2 id="detail-title">任务详情</h2>
+                </div>
+                <div class="detail-header-actions">
+                    <button
+                        class="icon-button"
+                        title="刷新任务"
+                        aria-label="刷新任务"
+                        (click)="refresh(true)"
+                        [disabled]="refreshing()"
+                    >
+                        <ui-icon name="refresh" />
+                    </button>
+                    <button
+                        class="icon-button"
+                        aria-label="关闭任务详情"
+                        [disabled]="actionBusy()"
+                        (click)="closeDetail()"
+                    >
+                        <ui-icon name="close" />
+                    </button>
+                </div>
+            </header>
+            <div class="detail-scroll">
+                <div class="task-intro">
+                    <div class="task-status-line">
+                        <span [class]="'status-badge ' + statusClass(task.status)">
+                            <ui-icon [name]="statusIcon(task.status)" />
+                            {{ statusLabel(task.status) }}
+                        </span>
+                        <span>{{ date(task.createdAt, true) }}</span>
+                    </div>
+                    <h3>{{ task.question }}</h3>
+                    <button
+                        class="task-id mono"
+                        (click)="copy(task.taskId, '任务编号')"
+                        title="复制任务编号"
+                    >
+                        {{ task.taskId }}
+                        <ui-icon name="copy" />
+                    </button>
+                    <div class="task-meta-line">
+                        <span>
+                            <ui-icon name="book" />
+                            {{ scopeLabel(task) }}
+                        </span>
+                        @if (task.traceId) {
+                            <button (click)="copy(task.traceId, '追踪编号')" [title]="task.traceId">
+                                <ui-icon name="link" />
+                                {{ task.traceId.slice(0, 16) }}
+                            </button>
+                        }
+                    </div>
+                    @if (task.parentTaskId) {
+                        <div class="parent-task mono">重试自 {{ task.parentTaskId }}</div>
+                    }
+                </div>
+                <div class="progress-track" aria-label="任务流程">
+                    <div [class.done]="progress(task) >= 1">
+                        <span>1</span>
+                        提交
+                    </div>
+                    <i></i>
+                    <div [class.done]="progress(task) >= 2">
+                        <span>2</span>
+                        检索
+                    </div>
+                    <i></i>
+                    <div
+                        [class.done]="progress(task) >= 3"
+                        [class.current]="task.status === 'AWAITING_CONFIRMATION'"
+                    >
+                        <span>3</span>
+                        审批
+                    </div>
+                    <i></i>
+                    <div [class.done]="task.status === 'SUCCEEDED'">
+                        <span>4</span>
+                        回答
+                    </div>
+                </div>
+                <div class="detail-tabs" role="tablist" aria-label="任务详情内容">
+                    <button
+                        role="tab"
+                        [attr.aria-selected]="detailTab() === 'result'"
+                        [class.active]="detailTab() === 'result'"
+                        (click)="changeDetailTab('result')"
+                    >
+                        依据与回答
+                    </button>
+                    <button
+                        role="tab"
+                        [attr.aria-selected]="detailTab() === 'activity'"
+                        [class.active]="detailTab() === 'activity'"
+                        (click)="changeDetailTab('activity')"
+                    >
+                        执行记录
+                        <span>{{ task.steps.length || 0 }}</span>
+                    </button>
+                    <button
+                        role="tab"
+                        [attr.aria-selected]="detailTab() === 'logs'"
+                        [class.active]="detailTab() === 'logs'"
+                        (click)="changeDetailTab('logs')"
+                    >
+                        追踪日志
+                    </button>
+                </div>
+
+                @if (detailTab() === 'result') {
+                    @if (task.status === 'FAILED') {
+                        <div class="task-alert error-alert">
+                            <ui-icon name="warning" />
+                            <div>
+                                <strong>本次任务未能完成</strong>
+                                <p>{{ task.errorMessage || '请查看执行记录，了解失败原因。' }}</p>
+                                <small>
+                                    可检查模型配置、额度与网络后重新发起。原任务记录会保留。
+                                </small>
+                            </div>
+                        </div>
+                    }
+                    @if (task.status === 'CANCELLED') {
+                        <div class="task-alert neutral-alert">
+                            <ui-icon name="stop" />
+                            <div>
+                                <strong>任务已取消</strong>
+                                <p>
+                                    {{
+                                        task.confirmComment ||
+                                            task.errorMessage ||
+                                            '任务已停止，不会继续生成回答。如仍需处理，请重新发起。'
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    @if (!isTerminal(task) && task.status !== 'AWAITING_CONFIRMATION') {
+                        <div class="task-alert running-alert">
+                            <ui-icon name="refresh" class="spinning" />
+                            <div>
+                                <strong>
+                                    {{ runningMessage(task).title }}
+                                </strong>
+                                <p>{{ runningMessage(task).description }}</p>
+                            </div>
+                        </div>
+                    }
+                    <section class="evidence-section">
+                        <div class="detail-section-heading">
+                            <h3>
+                                <ui-icon name="book" />
+                                检索依据
+                            </h3>
+                            <span>
+                                {{
+                                    task.context
+                                        ? '已找到参考内容'
+                                        : task.context === ''
+                                          ? '未找到相关依据'
+                                          : '等待检索'
+                                }}
+                            </span>
+                        </div>
+                        @if (task.context) {
+                            <p class="section-help">批准前，请核对材料能否支持问题中的结论。</p>
+                            <div class="evidence-content">{{ task.context }}</div>
+                        } @else if (task.context === '') {
+                            <div class="no-evidence">
+                                <ui-icon name="search" />
+                                <p>知识库中未找到相关依据。系统不会据此编造制度或金额。</p>
+                            </div>
+                        } @else {
+                            <div class="evidence-placeholder">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <p>检索结果将在这里显示</p>
+                            </div>
+                        }
+                    </section>
+                    @if (task.status === 'AWAITING_CONFIRMATION') {
+                        <section class="approval-panel">
+                            <div class="approval-title">
+                                <span><ui-icon name="shield" /></span>
+                                <div>
+                                    <h3>这一步，由你决定</h3>
+                                    <p>核对依据后批准，助手才会继续生成回答。</p>
+                                </div>
+                            </div>
+                            <label for="approval-comment">
+                                审批备注
+                                <span>可选</span>
+                            </label>
+                            <textarea
+                                id="approval-comment"
+                                name="approvalComment"
+                                [(ngModel)]="approvalComment"
+                                maxlength="500"
+                                rows="2"
+                                placeholder="记录你的核对意见…"
+                                [disabled]="actionBusy()"
+                            ></textarea>
+                            <div class="approval-actions">
+                                <span>长时间未审批会自动取消</span>
+                                <button
+                                    class="button"
+                                    [disabled]="actionBusy()"
+                                    (click)="approve(false)"
+                                >
+                                    拒绝任务
+                                </button>
+                                <button
+                                    class="button primary"
+                                    [disabled]="actionBusy() || !connected()"
+                                    (click)="approve(true)"
+                                >
+                                    <ui-icon name="check" />
+                                    {{ actionBusy() ? '处理中…' : '批准并生成' }}
+                                </button>
+                            </div>
+                        </section>
+                    }
+                    <section class="answer-section">
+                        <div class="detail-section-heading">
+                            <h3>
+                                <ui-icon name="sparkle" />
+                                助手回答
+                            </h3>
+                            @if (task.answer) {
+                                <button class="text-button" (click)="copy(task.answer, '回答')">
+                                    <ui-icon name="copy" />
+                                    复制回答
+                                </button>
+                            }
+                        </div>
+                        @if (task.answer) {
+                            <div
+                                class="answer-markdown"
+                                [innerHTML]="task.answer | safeMarkdown"
+                            ></div>
+                            <div class="answer-footnote">
+                                <ui-icon name="info" />
+                                回答由模型或知识边界规则生成，请结合引用原文核对。
+                            </div>
+                        } @else {
+                            <div class="answer-waiting">
+                                <ui-icon name="sparkle" />
+                                <p>
+                                    {{
+                                        task.status === 'AWAITING_CONFIRMATION'
+                                            ? '等待你批准后，回答将在这里生成。'
+                                            : task.status === 'CANCELLED'
+                                              ? '本次任务已取消，未生成回答。'
+                                              : task.status === 'FAILED'
+                                                ? '本次任务执行失败，未生成回答。'
+                                                : '任务处理中，回答将在这里显示。'
+                                    }}
+                                </p>
+                            </div>
+                        }
+                    </section>
+                    @if (task.confirmComment && task.status !== 'AWAITING_CONFIRMATION') {
+                        <div class="approval-comment">
+                            <ui-icon name="shield" />
+                            <div>
+                                <strong>审批备注</strong>
+                                <p>{{ task.confirmComment }}</p>
+                            </div>
+                        </div>
+                    }
+                }
+
+                @if (detailTab() === 'activity') {
+                    <section class="timeline-section">
+                        <div class="detail-section-heading">
+                            <h3>执行时间线</h3>
+                            <span>共 {{ task.steps.length || 0 }} 条记录</span>
+                        </div>
+                        <ol class="timeline">
+                            @for (step of task.steps; track $index) {
+                                <li>
+                                    <span class="timeline-node"></span>
+                                    <time>{{ stepTime(step) }}</time>
+                                    <p>{{ stepMessage(step) }}</p>
+                                </li>
+                            }
+                        </ol>
+                        @if (!task.steps.length) {
+                            <p class="muted">还没有执行记录。</p>
+                        }
+                    </section>
+                }
+                @if (detailTab() === 'logs') {
+                    <section class="log-section">
+                        <div class="detail-section-heading">
+                            <h3>任务追踪日志</h3>
+                            <button
+                                class="text-button"
+                                (click)="loadLogs()"
+                                [disabled]="logsLoading()"
+                            >
+                                <ui-icon name="refresh" />
+                                刷新
+                            </button>
+                        </div>
+                        <p class="section-help">同一任务的执行阶段与追踪编号，帮助定位问题。</p>
+                        @if (logsLoading()) {
+                            <p class="muted">正在加载日志…</p>
+                        }
+                        @if (logsError()) {
+                            <div class="inline-error">{{ logsError() }}</div>
+                        }
+                        <div class="log-list">
+                            @for (log of logs(); track $index) {
+                                <article>
+                                    <div>
+                                        <time>{{ date(log.timestamp) }}</time>
+                                        <span>{{ log.stage || 'TASK' }}</span>
+                                    </div>
+                                    <p>{{ log.message }}</p>
+                                    <small class="mono">{{ log.traceId }}</small>
+                                </article>
+                            }
+                            @if (!logs().length && !logsLoading() && !logsError()) {
+                                <div class="no-evidence"><p>当前任务尚无日志记录。</p></div>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+            <footer class="detail-footer">
+                <span>
+                    <span class="tiny-dot" [class.offline]="!connected()"></span>
+                    {{ connected() ? '状态自动同步' : '当前显示最近一次数据' }}
+                </span>
+                @if (isTerminal(task)) {
+                    <button
+                        class="button"
+                        [disabled]="taskDeleteBusy() || !connected()"
+                        (click)="requestTaskDeletion(task)"
+                    >
+                        <ui-icon name="trash" />
+                        删除任务
+                    </button>
+                }
+                @if (task.status === 'FAILED' || task.status === 'CANCELLED') {
+                    <button
+                        class="button primary"
+                        [disabled]="actionBusy() || !connected()"
+                        (click)="retry()"
+                    >
+                        <ui-icon name="refresh" />
+                        重新发起
+                    </button>
+                } @else if (!isTerminal(task) && task.status !== 'AWAITING_CONFIRMATION') {
+                    <button class="button" [disabled]="actionBusy()" (click)="cancel()">
+                        <ui-icon name="stop" />
+                        取消任务
+                    </button>
+                } @else if (task.status === 'SUCCEEDED') {
+                    <button class="button" (click)="openCompose(task.question)">
+                        <ui-icon name="plus" />
+                        再次提问
+                    </button>
+                }
+            </footer>
+        </section>
+    </div>
+}
+
+@if (rebuildConfirmOpen()) {
+    <div class="overlay confirmation-overlay" (click)="rebuildConfirmOpen.set(false)">
+        <section
+            class="dialog confirmation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="rebuild-title"
+            (click)="$event.stopPropagation()"
+        >
+            <span class="confirmation-symbol rebuild-symbol"><ui-icon name="refresh" /></span>
+            <h2 id="rebuild-title">重建全部知识索引？</h2>
+            <p>
+                这会重新为当前工作空间的全部文档（包含已就绪和失败的文档）生成向量索引，可能消耗模型额度。
+                请先确认密钥、额度和网络可用。任务历史和原文档会保留。
+            </p>
+            <div class="confirmation-actions">
+                <button class="button" (click)="rebuildConfirmOpen.set(false)">暂不重建</button>
+                <button
+                    class="button primary"
+                    [disabled]="rebuildBusy()"
+                    (click)="rebuildKnowledge()"
+                >
+                    确认重建索引
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (deleteCandidate(); as doc) {
+    <div class="overlay confirmation-overlay" (click)="!deleteBusy() && deleteCandidate.set(null)">
+        <section
+            class="dialog confirmation-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-title"
+            (click)="$event.stopPropagation()"
+        >
+            <span class="confirmation-symbol"><ui-icon name="trash" /></span>
+            <h2 id="delete-title">移除这份知识文档？</h2>
+            <p>“{{ doc.name }}”将不再参与新任务的检索。历史任务的依据与回答快照仍会保留。</p>
+            <div class="confirmation-actions">
+                <button
+                    class="button"
+                    [disabled]="deleteBusy()"
+                    (click)="deleteCandidate.set(null)"
+                >
+                    保留文档
+                </button>
+                <button class="button danger" [disabled]="deleteBusy()" (click)="deleteDocument()">
+                    {{ deleteBusy() ? '正在移除…' : '确认移除' }}
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (taskDeleteCandidate(); as task) {
+    <div
+        class="overlay confirmation-overlay"
+        (click)="!taskDeleteBusy() && taskDeleteCandidate.set(null)"
+    >
+        <section
+            class="dialog confirmation-dialog task-delete-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-task-title"
+            (click)="$event.stopPropagation()"
+        >
+            <span class="confirmation-symbol"><ui-icon name="trash" /></span>
+            <h2 id="delete-task-title">
+                {{ taskPermanentDelete() ? '永久删除' : '删除' }}选中的 {{ taskDeleteTargets().length }} 条任务？
+            </h2>
+            <p>
+                @if (taskPermanentDelete()) {
+                    以下任务的内容、回答、依据、执行记录和关联日志将从当前数据库中彻底删除。
+                    此操作无法在应用中恢复，也不会删除其他任务或知识文档。已有外部备份和服务日志文件不受此操作影响。
+                } @else {
+                    以下任务将从任务中心和首页移除。你可以在“最近删除”中恢复，原有回答、依据和执行记录都会保留。
+                }
+            </p>
+            <ul class="task-delete-list">
+                @for (target of taskDeleteTargets(); track target.taskId) {
+                    <li>{{ target.question }}<small>{{ target.taskId }}</small></li>
+                }
+            </ul>
+            @if (taskDeleteBusy()) {
+                <p role="status">正在处理 {{ taskDeleteProgress() }} / {{ taskDeleteTargets().length }} 条，请稍候。</p>
+            }
+            <div class="confirmation-actions">
+                <button
+                    class="button"
+                    [disabled]="taskDeleteBusy()"
+                    (click)="taskDeleteCandidate.set(null)"
+                >
+                    保留任务
+                </button>
+                <button
+                    class="button danger"
+                    [disabled]="taskDeleteBusy() || !connected()"
+                    (click)="deleteTask()"
+                >
+                    {{
+                        taskDeleteBusy()
+                            ? '正在删除…'
+                            : taskPermanentDelete()
+                              ? '确认永久删除，无法恢复'
+                              : '确认删除'
+                    }}
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (toast(); as item) {
+    <div class="toast" [class]="'toast ' + item.kind" role="status" aria-live="polite">
+        <ui-icon
+            [name]="item.kind === 'error' ? 'warning' : item.kind === 'success' ? 'check' : 'info'"
+        />
+        <span>{{ item.message }}</span>
+        <button class="icon-button" aria-label="关闭提示" (click)="toast.set(null)">
+            <ui-icon name="close" />
+        </button>
+    </div>
+}
